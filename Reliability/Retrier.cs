@@ -7,22 +7,32 @@ namespace DarkAgeBot.Reliability
 {
     public static class Retrier
     {
-        public static T Attempt<T>(Func<T> action, TimeSpan retryInterval, int maxAttemptCount = 3)
+        public static T Attempt<T>(Func<T> action, TimeSpan retryInterval, int maxAttemptCount = 3, bool successIfTrue = false)
         {
             var exceptions = new List<Exception>();
 
             for (int attempts = 0; attempts < maxAttemptCount; attempts++)
             {
                 try
-                {          
-                    var result = action.Invoke();
+                {
+                    T result = action();
 
-                    if (result.Equals(typeof(bool)))
+                    if (successIfTrue)
                     {
-                        if (Convert.ToBoolean(result))
+                        if (typeof(T) == typeof(bool))
                         {
-                            return action();
+                            if (Convert.ToBoolean(result))
+                            {
+                                return result;
+                            }
                         }
+                    }
+
+
+
+                    else
+                    {
+                        return result;
                     }
 
                     Task.Delay(retryInterval);
